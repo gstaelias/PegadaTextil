@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de Pegada Têxtil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0E2A2E;
+    --ink-soft: #26494D;
+    --paper: #F2EEE4;
+    --thread: #C79A4B;
+    --thread-dark: #9C7530;
+    --coral: #E1543A;
+    --line: rgba(14,42,46,0.16);
+    --card: #FFFFFF;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Work Sans', system-ui, sans-serif;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #EDE7D9;
+      --paper: #0E2020;
+      --card: #16302F;
+      --line: rgba(237,231,217,0.18);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #EDE7D9;
+    --paper: #0E2020;
+    --card: #16302F;
+    --line: rgba(237,231,217,0.18);
+  }
+
+  .wrap {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 48px 20px 80px;
+  }
+
+  header.top {
+    margin-bottom: 40px;
+  }
+  .eyebrow-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .thread-icon {
+    width: 28px;
+    height: 28px;
+    flex: none;
+  }
+  .kicker {
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--thread-dark);
+    font-weight: 600;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(32px, 7vw, 46px);
+    line-height: 1.08;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--thread-dark);
+  }
+  .lede {
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 46ch;
+    color: var(--ink);
+    opacity: 0.82;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 32px 28px;
+    margin-bottom: 20px;
+  }
+
+  .q-count {
+    font-size: 13px;
+    color: var(--thread-dark);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .q-text {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 0 0 20px;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    text-align: left;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .opt:hover { border-color: var(--thread); }
+  .opt.selected {
+    border-color: var(--thread-dark);
+    background: color-mix(in srgb, var(--thread) 14%, transparent);
+  }
+  .opt .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    flex: none;
+    position: relative;
+  }
+  .opt.selected .dot {
+    border-color: var(--thread-dark);
+  }
+  .opt.selected .dot::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: var(--thread-dark);
+  }
+
+  .progress {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+  }
+  .progress span {
+    height: 3px;
+    flex: 1;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress span i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--thread-dark);
+    transition: width .3s ease;
+  }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 26px;
+  }
+  button.next, button.calc {
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 13px 24px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  button.next:disabled, button.calc:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  button.back {
+    background: none;
+    border: none;
+    color: var(--ink);
+    opacity: 0.6;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Work Sans', sans-serif;
+    padding: 8px;
+  }
+  button.back:disabled { visibility: hidden; }
+
+  /* Results */
+  .result-hero {
+    text-align: left;
+    padding: 8px 0 4px;
+  }
+  .result-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--thread-dark);
+    margin-bottom: 8px;
+  }
+  .result-number {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(48px, 13vw, 76px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+  .result-unit {
+    font-size: 16px;
+    opacity: 0.75;
+    margin-bottom: 28px;
+  }
+  .result-annual {
+    display: flex;
+    gap: 28px;
+    padding: 18px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 24px;
+  }
+  .stat { flex: 1; }
+  .stat .n {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 500;
+  }
+  .stat .l {
+    font-size: 12.5px;
+    opacity: 0.65;
+    margin-top: 2px;
+  }
+  .tier-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+  .tier-baixo { background: #DCEAD8; color: #2F5C2A; }
+  .tier-medio { background: #F5E3C4; color: #8A5A12; }
+  .tier-alto { background: #F5D3CB; color: #A3341E; }
+  :root[data-theme="dark"] .tier-baixo, @media (prefers-color-scheme: dark) { }
+
+  .result-copy {
+    font-size: 15px;
+    line-height: 1.6;
+    opacity: 0.88;
+    margin-bottom: 24px;
+  }
+  .tip-box {
+    border-left: 3px solid var(--thread-dark);
+    padding: 4px 0 4px 16px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    opacity: 0.9;
+    margin-bottom: 28px;
+  }
+  .restart {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 11px 20px;
+    border-radius: 3px;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  footer.note {
+    margin-top: 36px;
+    font-size: 12.5px;
+    opacity: 0.55;
+    line-height: 1.6;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow-row">
+      <svg class="thread-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 14C4 14 8 6 14 6C20 6 20 22 24 14M4 14C4 14 8 22 14 22C20 22 20 6 24 14" stroke="#C79A4B" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span class="kicker">ODS 14 · Moda e microplásticos</span>
+    </div>
+    <h1>Calculadora de <em>Pegada Têxtil</em></h1>
+    <p class="lede">Oito perguntas rápidas sobre seu guarda-roupa, seus hábitos de lavagem e suas atitudes de consumo — no final, você vê uma estimativa de quantas microfibras plásticas libera por semana no oceano.</p>
+  </header>
+
+  <div class="card">
+
+    <!-- QUIZ SCREEN -->
+    <div id="quiz" class="screen active">
+      <div class="progress" id="progress"></div>
+
+      <div id="questions"></div>
+
+      <div class="nav-row">
+        <button class="back" id="backBtn">← Voltar</button>
+        <button class="next" id="nextBtn" disabled>Próxima →</button>
+      </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="result" class="screen">
+      <div class="result-hero">
+        <div class="result-label">Sua estimativa semanal</div>
+        <div class="result-number" id="weeklyNumber">0</div>
+        <div class="result-unit">microfibras plásticas liberadas por semana</div>
+
+        <span class="tier-badge" id="tierBadge"></span>
+
+        <div class="result-annual">
+          <div class="stat">
+            <div class="n" id="annualNumber">0</div>
+            <div class="l">microfibras por ano</div>
+          </div>
+          <div class="stat">
+            <div class="n" id="loadsNumber">0</div>
+            <div class="l">lavagens sintéticas por ano</div>
+          </div>
+        </div>
+
+        <p class="result-copy" id="resultCopy"></p>
+        <div class="tip-box" id="tipBox"></div>
+
+        <button class="restart" id="restartBtn">Refazer o teste</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="note">
+    Estimativa educativa baseada em estudos que apontam a liberação de até ~700 mil microfibras por lavagem de uma peça 100% sintética. Números variam conforme tecido, máquina e ciclo de lavagem — use como ilustração do problema, não como medição exata.
+  </footer>
+
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    key: 'buy',
+    text: 'Quantas peças de roupa você compra, em média, por mês?',
+    options: [
+      { label: '0 a 1 peça', value: 0.5 },
+      { label: '2 a 4 peças', value: 3 },
+      { label: '5 a 8 peças', value: 6.5 },
+      { label: '9 peças ou mais', value: 10 },
+    ]
+  },
+  {
+    key: 'synthetic',
+    text: 'Dessas peças, quantas são de tecido sintético (poliéster, nylon, acrílico, elastano)?',
+    options: [
+      { label: 'Quase nenhuma', value: 0.1 },
+      { label: 'Cerca da metade', value: 0.5 },
+      { label: 'A maioria', value: 0.8 },
+      { label: 'Quase todas', value: 0.95 },
+    ]
+  },
+  {
+    key: 'washes',
+    text: 'Quantas vezes por semana você lava roupa (no total)?',
+    options: [
+      { label: '1 vez', value: 1 },
+      { label: '2 a 3 vezes', value: 2.5 },
+      { label: '4 a 5 vezes', value: 4.5 },
+      { label: 'Todo dia', value: 7 },
+    ]
+  },
+  {
+    key: 'dryer',
+    text: 'Você costuma usar secadora de roupa?',
+    options: [
+      { label: 'Nunca uso', value: 1 },
+      { label: 'Às vezes', value: 1.15 },
+      { label: 'Uso sempre', value: 1.3 },
+    ]
+  },
+  {
+    key: 'lifespan',
+    text: 'Em média, quanto tempo uma peça sua dura no guarda-roupa antes de ser descartada ou doada?',
+    options: [
+      { label: 'Menos de 6 meses', value: 1.3 },
+      { label: '6 meses a 1 ano', value: 1.15 },
+      { label: '1 a 2 anos', value: 1 },
+      { label: 'Mais de 2 anos', value: 0.85 },
+    ]
+  },
+  {
+    key: 'filter',
+    text: 'Você usa bolsa de lavagem (tipo guppyfriend) ou filtro de captura de microfibra na sua máquina?',
+    options: [
+      { label: 'Sim, sempre', value: 0.3 },
+      { label: 'Às vezes', value: 0.65 },
+      { label: 'Não uso', value: 1 },
+      { label: 'Não conhecia essa opção', value: 1 },
+    ]
+  },
+  {
+    key: 'secondhand',
+    text: 'Quantas das suas roupas sintéticas são de brechó/segunda mão, em vez de compradas novas?',
+    options: [
+      { label: 'Quase nenhuma', value: 1 },
+      { label: 'Cerca da metade', value: 0.9 },
+      { label: 'A maioria', value: 0.78 },
+      { label: 'Quase todas', value: 0.65 },
+    ]
+  },
+  {
+    key: 'awareness',
+    text: 'Antes de responder esse teste, você sabia que lavar roupa sintética libera microplástico no oceano?',
+    options: [
+      { label: 'Sim, já sabia', value: 1 },
+      { label: 'Tinha ouvido falar, mas não sabia os detalhes', value: 1 },
+      { label: 'Não fazia ideia', value: 1 },
+    ]
+  },
+];
+
+let current = 0;
+const answers = {};
+
+const progressEl = document.getElementById('progress');
+const questionsEl = document.getElementById('questions');
+const nextBtn = document.getElementById('nextBtn');
+const backBtn = document.getElementById('backBtn');
+
+function buildProgress() {
+  progressEl.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const span = document.createElement('span');
+    span.innerHTML = '<i></i>';
+    progressEl.appendChild(span);
+  });
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[current];
+  questionsEl.innerHTML = `
+    <div class="q-count">Pergunta ${current + 1} de ${QUESTIONS.length}</div>
+    <p class="q-text">${q.text}</p>
+    <div class="options" id="opts"></div>
+  `;
+  const optsWrap = document.getElementById('opts');
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (answers[q.key] && answers[q.key].label === opt.label ? ' selected' : '');
+    btn.innerHTML = `<span class="dot"></span><span>${opt.label}</span>`;
+    btn.addEventListener('click', () => {
+      answers[q.key] = opt;
+      renderQuestion();
+      nextBtn.disabled = false;
+    });
+    optsWrap.appendChild(btn);
+  });
+
+  nextBtn.disabled = !answers[q.key];
+  nextBtn.textContent = current === QUESTIONS.length - 1 ? 'Ver resultado →' : 'Próxima →';
+  backBtn.disabled = current === 0;
+  updateProgressBar();
+}
+
+function updateProgressBar() {
+  const bars = progressEl.querySelectorAll('span i');
+  bars.forEach((bar, i) => {
+    bar.style.width = i < current ? '100%' : (i === current ? '50%' : '0%');
+  });
+}
+
+nextBtn.addEventListener('click', () => {
+  if (current < QUESTIONS.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+});
+
+backBtn.addEventListener('click', () => {
+  if (current > 0) {
+    current--;
+    renderQuestion();
+  }
+});
+
+function showResult() {
+  const buy = answers.buy.value;
+  const synthFrac = answers.synthetic.value;
+  const washes = answers.washes.value;
+  const dryerMult = answers.dryer.value;
+  const lifespanMult = answers.lifespan.value;
+  const filterMult = answers.filter.value;
+  const secondhandMult = answers.secondhand.value;
+
+  const FIBERS_PER_SYNTHETIC_WASH = 700000;
+
+  const syntheticWashesPerWeek = washes * synthFrac;
+  const weeklyFibers = syntheticWashesPerWeek * FIBERS_PER_SYNTHETIC_WASH * dryerMult * lifespanMult * filterMult * secondhandMult;
+  const annualFibers = weeklyFibers * 52;
+  const annualSyntheticWashes = Math.round(syntheticWashesPerWeek * 52);
+
+  let tier, tierClass, copy, tip;
+  if (weeklyFibers < 1200000) {
+    tier = 'Impacto mais baixo';
+    tierClass = 'tier-baixo';
+    copy = 'Seu perfil de consumo e lavagem gera um volume relativamente menor de microfibras — provavelmente por usar mais fibras naturais ou lavar com menos frequência. Ainda assim, toda fibra sintética lavada contribui para o total que chega aos oceanos.';
+    tip = 'Dica: bolsas de lavagem tipo guppyfriend e ciclos mais curtos e frios reduzem ainda mais a liberação de microfibras nas poucas peças sintéticas que você lava.';
+  } else if (weeklyFibers < 4000000) {
+    tier = 'Impacto médio';
+    tierClass = 'tier-medio';
+    copy = 'Seu consumo está na faixa intermediária — uma mistura de fibras naturais e sintéticas, com uma rotina de lavagem comum. Pequenos ajustes de hábito já reduzem bastante esse número ao longo do ano.';
+    tip = 'Dica: lavar roupas sintéticas com menos frequência (só quando realmente sujas) e evitar secadora nessas peças já corta uma boa parte da liberação de microfibras.';
+  } else {
+    tier = 'Impacto mais alto';
+    tierClass = 'tier-alto';
+    copy = 'Seu perfil combina bastante roupa sintética, lavagens frequentes e giro rápido de guarda-roupa — a combinação que mais libera microfibras ao longo do ano. Isso é exatamente o padrão de consumo que o fast fashion incentiva.';
+    tip = 'Dica: priorizar fibras naturais nas próximas compras, usar filtro ou bolsa de lavagem para sintéticos, e alongar a vida útil das peças que você já tem são os três ajustes com maior efeito no seu número.';
+  }
+
+  if (answers.awareness.label === 'Não fazia ideia') {
+    copy += ' E o mais importante: você não sabia disso antes — agora que sabe, já é possível ajustar alguns hábitos.';
+  } else if (answers.awareness.label === 'Tinha ouvido falar, mas não sabia os detalhes') {
+    copy += ' Você já tinha ouvido falar do problema — esse número ajuda a colocar em perspectiva o tamanho real dele no seu dia a dia.';
+  }
+
+  if (answers.filter.label === 'Não conhecia essa opção') {
+    tip += ' Vale a pena conhecer as bolsas de lavagem e filtros de microfibra — são uma das intervenções mais simples e baratas que existem hoje.';
+  }
+
+  document.getElementById('tierBadge').textContent = tier;
+  document.getElementById('tierBadge').className = 'tier-badge ' + tierClass;
+  document.getElementById('resultCopy').textContent = copy;
+  document.getElementById('tipBox').textContent = tip;
+  document.getElementById('loadsNumber').textContent = annualSyntheticWashes.toLocaleString('pt-BR');
+
+  document.getElementById('quiz').classList.remove('active');
+  document.getElementById('result').classList.add('active');
+
+  animateNumber('weeklyNumber', Math.round(weeklyFibers));
+  animateNumber('annualNumber', Math.round(annualFibers));
+}
+
+function animateNumber(id, target) {
+  const el = document.getElementById(id);
+  const duration = 900;
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const val = Math.round(target * eased);
+    el.textContent = val.toLocaleString('pt-BR');
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  current = 0;
+  for (const k in answers) delete answers[k];
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('quiz').classList.add('active');
+  renderQuestion();
+});
+
+buildProgress();
+renderQuestion();
+</script>
+</body>
+</html>
